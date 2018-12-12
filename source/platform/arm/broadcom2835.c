@@ -20,7 +20,7 @@ void Bcm2835Load()
 #ifndef TYPE_DRIVER
 
 void MicroDelay(u32 delay) {
-	volatile u64* timeStamp = (u64*)0x20003004;
+	volatile u64* timeStamp = (u64*)0x3F003004;
 	u64 stop = *timeStamp + delay;
 
 	while (*timeStamp < stop) 
@@ -31,7 +31,7 @@ Result PowerOnUsb() {
 	volatile u32* mailbox;
 	u32 result;
 
-	mailbox = (u32*)0x2000B880;
+	mailbox = (u32*)0x3F00B880;
 	while (mailbox[6] & 0x80000000);
 	mailbox[8] = 0x80;
 	do {

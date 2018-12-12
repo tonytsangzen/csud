@@ -7,8 +7,8 @@ TYPE=(STANDALONE|LOWLEVEL|DRIVER)
 	STANDALONE builds have no external dependencies.
 	LOWLEVEL builds have few external dependencies. (default)
 	DRIVER builds have many external dependencies.
-TARGET=(RPI|NONE)
-	RPI builds for the Raspberry Pi. Libs: ARM_V6, BCM2835, DWC.
+TARGET=(RPI2|NONE)
+	RPI2 builds for the Raspberry Pi2. Libs: ARM_V6, BCM2835, DWC.
 	NONE builds for no system in particular. Libs: None. (default)
 GNU=*
 	Specifies the cross compiler to use e.g. 'arm-none-eabi-'. Default is blank.
