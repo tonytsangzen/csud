@@ -269,7 +269,7 @@ Result HcdPrepareChannel(struct UsbDevice *device, u8 channel,
 }
 
 void HcdTransmitChannel(u8 channel, void* buffer) {	
-    buffer =  (void *) ((u32) buffer | 0xC0000000); // map to no cache area
+	buffer =  (void *) ((u32) buffer | 0xC0000000); // map to no cache area
 	ReadBackReg(&Host->Channel[channel].SplitControl);
 	Host->Channel[channel].SplitControl.CompleteSplit = false;
 	WriteThroughReg(&Host->Channel[channel].SplitControl);
