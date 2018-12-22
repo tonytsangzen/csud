@@ -3,4 +3,4 @@ LIB_BCM2835 ?= 1
 LIB_DWC ?= 1
 CFLAGS += -DTARGET_RPI2 
 CFLAGS += -Wa,-march=armv7
-CFLAGS += -Wa,-mcpu=cortex-a7 -mhard-float
+CFLAGS += -Wa,-mcpu=cortex-a7
