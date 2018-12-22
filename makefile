@@ -49,7 +49,7 @@ all:
 # -Wno-packet-bitfield-compat: Do not warn about structures which would complie differently on older gcc.
 # -fshort-wchar: Treat wchar as a 16 bit value.
 # -Wall: Print lots of compiler warnings
-CFLAGS += -std=c99 -fpack-struct -Wno-packed-bitfield-compat -fshort-wchar -Wall 
+CFLAGS += -std=c99 -fpack-struct -Wno-packed-bitfield-compat -fshort-wchar -Wall $(COPT)
 CFLAGS += $(patsubst %,-I%,$(INCDIRS)) 
 	
 include $(CONFIGDIR)makefile.in
