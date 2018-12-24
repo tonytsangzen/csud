@@ -20,7 +20,9 @@ else
 	CFLAGS += -DTYPE_ERROR 
 endif
 
-ifeq ("$(TARGET)", "RPI2")
+ifeq ("$(TARGET)", "RPI1")
+	include $(DIR)rpi.in
+else ifeq ("$(TARGET)", "RPI2")
 	include $(DIR)rpi.in
 else ifeq ("$(TARGET)", "NONE")
 	CFLAGS += -DTARGET_NONE 

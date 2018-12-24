@@ -36,9 +36,9 @@ all:
 	@echo "          alters how complete the driver is STANDALONE for no external"
 	@echo "          dependencies LOWLEVEL for only key dependencies, DRIVER for" 
 	@echo "          typical levels."
-	@echo " target - RPI2, NONE (default)"
-	@echo "          alters the target system. NONE for dummy driver, RPI2 for" 
-	@echo "          the RaspberryPi2"
+	@echo " target - RPI1, RPI2, NONE (default)"
+	@echo "          alters the target system. NONE for dummy driver, RPI1 for" 
+	@echo "          RPI1 for the Raspberry Pi, RPI2 for the RaspberryPi 2"
 	@echo " gnu    - A gnu compiler prefix (arm-none-eabi-) or empty (default)."
 	@echo "          The compiler chain to use (for cross compiling)."
 	@echo "See arguments for more."
@@ -51,24 +51,24 @@ all:
 # -Wall: Print lots of compiler warnings
 CFLAGS += -std=c99 -fpack-struct -Wno-packed-bitfield-compat -fshort-wchar -Wall $(COPT)
 CFLAGS += $(patsubst %,-I%,$(INCDIRS)) 
-	
+
 include $(CONFIGDIR)makefile.in
 include $(SOURCE)makefile.in
 
 # Rule to make everything.
 driver: $(LIBNAME) 
-	
+
 # Rule to make the driver file.
 $(LIBNAME) : $(patsubst %/,%, $(BUILD)) $(OBJECTS)
 	-rm -f $(LIBNAME)
 	$(GNU)ar rc $(LIBNAME) $(OBJECTS)
-		
+
 # Rule to make the c object files.
 GCC := $(GNU)gcc $(CFLAGS) -c -I$(INCDIR)
 
 $(BUILD):
 	mkdir $(patsubst %/,%, $(BUILD))
-	
+
 # Rule to clean files.
 clean : 
 	-rm -f $(wildcard $(BUILD)*.*)
