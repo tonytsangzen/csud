@@ -45,6 +45,10 @@ void UsbLoad()
 Result UsbInitialise() {
 	Result result;
 
+	for (u32 number = 0; number < MaximumDevices; number++) {
+		Devices[number] = NULL;
+	}
+
 	ConfigurationLoad();
 	result = OK;
 
@@ -578,6 +582,7 @@ Result UsbAttachDevice(struct UsbDevice *device) {
 Result UsbAllocateDevice(struct UsbDevice **device) {
 	if ((*device = MemoryAllocate(sizeof(struct UsbDevice))) == NULL)
 		return ErrorMemory;
+	MemorySet(*device, 0, sizeof(struct UsbDevice));
 
 	for (u32 number = 0; number < MaximumDevices; number++) {
 		if (Devices[number] == NULL) {
@@ -607,6 +612,8 @@ Result UsbAllocateDevice(struct UsbDevice **device) {
 
 void UsbDeallocateDevice(struct UsbDevice *device) {
 	LOG_DEBUGF("USBD: Deallocating device %d: %s.\n", device->Number, UsbGetDescription(device));
+	if(device->Number >= MaximumDevices)
+		return;
 	
 	if (device->DeviceDetached != NULL)
 		device->DeviceDetached(device);

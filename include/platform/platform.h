@@ -57,6 +57,7 @@ void* MemoryReserve(u32 length, void* physicalAddress);
 	destination are null, should not copy anything.
 */
 void MemoryCopy(void* destination, void* source, u32 length);
+void MemorySet(void* destination, u8 v, u32 length);
 
 #ifdef NO_LOG
 #define LOG(x)

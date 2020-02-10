@@ -29,12 +29,12 @@ struct HeapAllocation {
 	struct HeapAllocation *Next;
 };
 
-u8 Heap[0x4000] __attribute__((aligned(8))); // Support a maximum of 16KiB of allocations
-struct HeapAllocation Allocations[0x100]; // Support 256 allocations
-struct HeapAllocation *FirstAllocation = HEAP_END, *FirstFreeAllocation = NULL;
-u32 allocated = 0;
+static u8 Heap[0x4000] __attribute__((aligned(8))); // Support a maximum of 16KiB of allocations
+static struct HeapAllocation Allocations[0x100]; // Support 256 allocations
+static struct HeapAllocation *FirstAllocation = HEAP_END, *FirstFreeAllocation = NULL;
+static u32 allocated = 0;
 
-void* MemoryAllocate(u32 size) {
+static void* MemoryAllocateRaw(u32 size) {
 	struct HeapAllocation *Current, *Next;
 	if (FirstFreeAllocation == NULL) {
 		LOG_DEBUG("Platform: First memory allocation, reserving 16KiB of heap, 256 entries.\n");
@@ -121,6 +121,14 @@ void* MemoryAllocate(u32 size) {
 	return FirstAllocation->Address;
 }
 
+void* MemoryAllocate(u32 size) {
+	void* p = MemoryAllocateRaw(size);
+	if(p != NULL) {
+		MemorySet(p, 0, size);
+	}
+	return p;
+}
+
 void MemoryDeallocate(void* address) {
 	struct HeapAllocation *Current, **CurrentAddress;
 
@@ -162,6 +170,15 @@ void MemoryCopy(void* destination, void* source, u32 length) {
 		s += length;
 		while (length-- > 0)
 			*--d = *--s;
+	}
+}
+
+void MemorySet(void* destination, u8 v, u32 length) {
+	u8* d = (u8*)destination;
+	u32 i = 0;
+	while(i < length) {
+		d[i] = v;
+		i++;
 	}
 }
 
@@ -447,4 +464,9 @@ void PlatformLoad()
 	FirstAllocation = HEAP_END;
 	FirstFreeAllocation = NULL;
 #endif
+	MemorySet(Heap, 0, 0x4000);
+	allocated = 0;
+	for(u32 i=0; i<0x100; i++) {
+		MemorySet(&Allocations[i], 0, sizeof(struct HeapAllocation));
+	}
 }

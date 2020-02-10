@@ -30,6 +30,7 @@ u8* databuffer = NULL;
 void DwcLoad() 
 {
 	LOG_DEBUG("CSUD: DesignWare Hi-Speed USB 2.0 On-The-Go (HS OTG) Controller driver version 0.1\n"); 
+	RootHubDeviceNumber = 0;
 }
 
 void WriteThroughReg(volatile const void* reg) {
@@ -486,11 +487,12 @@ retry:
 		if (packets == Host->Channel[channel].TransferSize.PacketCount) break;
 	} while (Host->Channel[channel].TransferSize.PacketCount > 0);
 
-	if (packets == Host->Channel[channel].TransferSize.PacketCount) {
+	/*if (packets == Host->Channel[channel].TransferSize.PacketCount) {
 		device->Error = ConnectionError;
 		LOGF("HCD: Transfer to %s got stuck.\n", UsbGetDescription(device));
 		return ErrorDevice;
 	}
+	*/
 
 	if (tries > 1) {
 		LOGF("HCD: Transfer to %s succeeded on attempt %d/3.\n", UsbGetDescription(device), tries);
@@ -504,6 +506,7 @@ Result HcdSumbitControlMessage(struct UsbDevice *device,
 	struct UsbDeviceRequest *request) {
 	Result result;
 	struct UsbPipeAddress tempPipe;
+	//LOG_DEBUGF("HCD: sumbit dev: %d, rootHub: %d\n", pipe.Device, RootHubDeviceNumber);
 	if (pipe.Device == RootHubDeviceNumber) {
 		return HcdProcessRootHubMessage(device, pipe, buffer, bufferLength, request);
 	}

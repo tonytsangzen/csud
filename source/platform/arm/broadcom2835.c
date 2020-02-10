@@ -20,11 +20,7 @@ void Bcm2835Load()
 #ifndef TYPE_DRIVER
 
 void MicroDelay(u32 delay) {
-#ifdef TARGET_RPI1
-	volatile u64* timeStamp = (u64*)0x20003004;
-#else
-	volatile u64* timeStamp = (u64*)0x3F003004;
-#endif
+	volatile u64* timeStamp = (u64*)(_RASPI_MMIO_BASE+0x0003004);
 	u64 stop = *timeStamp + delay;
 
 	while (*timeStamp < stop) 
@@ -35,11 +31,7 @@ Result PowerOnUsb() {
 	volatile u32* mailbox;
 	u32 result;
 
-#ifdef TARGET_RPI1
-	mailbox = (u32*)0x2000B880;
-#else
-	mailbox = (u32*)0x3F00B880;
-#endif
+	mailbox = (u32*)(_RASPI_MMIO_BASE+0x0000B880);
 	while (mailbox[6] & 0x80000000);
 	mailbox[8] = 0x80;
 	do {
