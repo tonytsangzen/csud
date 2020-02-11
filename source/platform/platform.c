@@ -37,7 +37,7 @@ static u32 allocated = 0;
 static void* MemoryAllocateRaw(u32 size) {
 	struct HeapAllocation *Current, *Next;
 	if (FirstFreeAllocation == NULL) {
-		LOG_DEBUG("Platform: First memory allocation, reserving 16KiB of heap, 256 entries.\n");
+		//LOG_DEBUG("Platform: First memory allocation, reserving 16KiB of heap, 256 entries.\n");
 		MemoryReserve(sizeof(Heap), &Heap);
 		MemoryReserve(sizeof(Allocations), &Allocations);
 
@@ -47,12 +47,12 @@ static void* MemoryAllocateRaw(u32 size) {
 	size += (8 - (size & 7)) & 7; // Align to 8
 
 	if (allocated + size > sizeof(Heap)) {
-		LOG("Platform: Out of memory! We should've had more heap space in platform.c.\n");
+		//LOG("Platform: Out of memory! We should've had more heap space in platform.c.\n");
 		return NULL;
 	}
 	
 	if (FirstFreeAllocation == HEAP_END) {
-		LOG("Platform: Out of memory! We should've had more allocations in platform.c.\n");
+		//LOG("Platform: Out of memory! We should've had more allocations in platform.c.\n");
 		return NULL;
 	}
 	Current = FirstAllocation;
@@ -73,7 +73,7 @@ static void* MemoryAllocateRaw(u32 size) {
 				Next->Next = Current->Next;
 				Current->Next = Next;
 				allocated += size;
-				LOG_DEBUGF("Platform: malloc(%#x) = %#x. (%d/%d)\n", size, Next->Address, allocated, sizeof(Heap));
+				//LOG_DEBUGF("Platform: malloc(%#x) = %#x. (%d/%d)\n", size, Next->Address, allocated, sizeof(Heap));
 				return Next->Address;
 			}
 			else
@@ -93,12 +93,12 @@ static void* MemoryAllocateRaw(u32 size) {
 				Next->Next = Current->Next;
 				Current->Next = Next;
 				allocated += size;
-				LOG_DEBUGF("Platform: malloc(%#x) = %#x. (%d/%d)\n", size, Next->Address, allocated, sizeof(Heap));
+				//LOG_DEBUGF("Platform: malloc(%#x) = %#x. (%d/%d)\n", size, Next->Address, allocated, sizeof(Heap));
 				return Next->Address;
 			}
 			else {
-				LOG("Platform: Out of memory! We should've had more heap space in platform.c.\n");
-				LOG_DEBUGF("Platform: malloc(%#x) = %#x. (%d/%d)\n", size, NULL, allocated, sizeof(Heap));
+				//LOG("Platform: Out of memory! We should've had more heap space in platform.c.\n");
+				//LOG_DEBUGF("Platform: malloc(%#x) = %#x. (%d/%d)\n", size, NULL, allocated, sizeof(Heap));
 				return NULL;
 			}
 		}
@@ -117,7 +117,7 @@ static void* MemoryAllocateRaw(u32 size) {
 	else
 		FirstFreeAllocation = Next;
 	allocated += size;
-	LOG_DEBUGF("Platform: malloc(%#x) = %#x. (%d/%d)\n", size, FirstAllocation->Address, allocated, sizeof(Heap));
+	//LOG_DEBUGF("Platform: malloc(%#x) = %#x. (%d/%d)\n", size, FirstAllocation->Address, allocated, sizeof(Heap));
 	return FirstAllocation->Address;
 }
 
@@ -141,7 +141,7 @@ void MemoryDeallocate(void* address) {
 			*CurrentAddress = Current->Next;
 			Current->Next = FirstFreeAllocation;
 			FirstFreeAllocation = Current;
-			LOG_DEBUGF("Platform: free(%#x) (%d/%d)\n", address, allocated, sizeof(Heap));
+			//LOG_DEBUGF("Platform: free(%#x) (%d/%d)\n", address, allocated, sizeof(Heap));
 			return;
 		}
 		else {
@@ -150,8 +150,8 @@ void MemoryDeallocate(void* address) {
 		}
 	}
 	
-	LOG_DEBUGF("Platform: free(%#x) (%d/%d)\n", address, allocated, sizeof(Heap));
-	LOG("Platform: Deallocated memory that was never allocated. Ignored, but you should look into it.\n");
+	//LOG_DEBUGF("Platform: free(%#x) (%d/%d)\n", address, allocated, sizeof(Heap));
+	//LOG("Platform: Deallocated memory that was never allocated. Ignored, but you should look into it.\n");
 }
 
 void MemoryCopy(void* destination, void* source, u32 length) {

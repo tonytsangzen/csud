@@ -487,12 +487,11 @@ retry:
 		if (packets == Host->Channel[channel].TransferSize.PacketCount) break;
 	} while (Host->Channel[channel].TransferSize.PacketCount > 0);
 
-	/*if (packets == Host->Channel[channel].TransferSize.PacketCount) {
+	if (packets == Host->Channel[channel].TransferSize.PacketCount) {
 		device->Error = ConnectionError;
 		LOGF("HCD: Transfer to %s got stuck.\n", UsbGetDescription(device));
 		return ErrorDevice;
 	}
-	*/
 
 	if (tries > 1) {
 		LOGF("HCD: Transfer to %s succeeded on attempt %d/3.\n", UsbGetDescription(device), tries);
@@ -506,8 +505,8 @@ Result HcdSumbitControlMessage(struct UsbDevice *device,
 	struct UsbDeviceRequest *request) {
 	Result result;
 	struct UsbPipeAddress tempPipe;
-	//LOG_DEBUGF("HCD: sumbit dev: %d, rootHub: %d\n", pipe.Device, RootHubDeviceNumber);
 	if (pipe.Device == RootHubDeviceNumber) {
+		//LOG_DEBUGF("HCD: sumbit dev: %d, rootHub: %d\n", pipe.Device, RootHubDeviceNumber);
 		return HcdProcessRootHubMessage(device, pipe, buffer, bufferLength, request);
 	}
 
