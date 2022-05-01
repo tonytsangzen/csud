@@ -39,6 +39,7 @@ void KbdLoad();
 #ifdef LIB_MOUSE
 void MouseLoad();
 #endif
+void TouchLoad();
 
 void ConfigurationLoad() {
 	// Call each libraries load method here. Watch out for the order, load more
@@ -66,4 +67,5 @@ void ConfigurationLoad() {
 #ifdef LIB_MOUSE
 	MouseLoad();
 #endif
+	TouchLoad();
 }

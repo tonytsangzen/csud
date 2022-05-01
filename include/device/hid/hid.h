@@ -121,7 +121,7 @@ extern Result (*HidUsageAttach[HidUsageAttachCount])(struct UsbDevice *device, u
 	Performs a hid get report request as defined in  in the USB HID 1.11 manual
 	in 7.2.1. 
 */
-Result HidGetReport(struct UsbDevice *device, enum HidReportType reportType, 
+Result HidGetReport(struct UsbDevice *device, u8 endPoint, enum HidReportType reportType, 
 	u8 reportId, u8 interface, u32 bufferLength, void* buffer);
 
 /**
@@ -148,6 +148,7 @@ Result HidWriteDevice(struct UsbDevice *device, u8 report);
 	using HidGetReport not interrupts.
 */
 Result HidReadDevice(struct UsbDevice *device, u8 report);
+Result HidReadDeviceRaw(struct UsbDevice *device, u8 endPoint, u8 report, u8* buffer);
 
 /**
 	\brief Enumerates a device as a HID device.

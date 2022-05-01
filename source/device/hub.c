@@ -34,6 +34,7 @@ Result HubReadDescriptor(struct UsbDevice *device) {
 		LOGF("HUB: Failed to read hub descriptor for %s.\n", UsbGetDescription(device));
 		return result;
 	}
+	LOGF("%s %d\n", __func__, __LINE__);
 	if (((struct HubDevice*)device->DriverData)->Descriptor == NULL &&
 		(((struct HubDevice*)device->DriverData)->Descriptor = MemoryAllocate(header.DescriptorLength)) == NULL) {
 		LOGF("HUB: Not enough memory to read hub descriptor for %s.\n", UsbGetDescription(device));

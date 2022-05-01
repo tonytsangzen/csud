@@ -80,6 +80,31 @@ errorReturn:
 	return result;
 }
 
+Result UsbInterruptMessage(struct UsbDevice *device, 
+	struct UsbPipeAddress pipe, void* buffer, u32 bufferLength,
+	struct UsbDeviceRequest *request, u32 timeout) {
+	Result result;
+
+	if (((u32)buffer & 0x3) != 0)
+		LOG_DEBUG("USBD: Warning message buffer not word aligned.\n");
+	result = HcdSumbitInterruptTransfer(device, pipe, buffer, bufferLength, request);
+
+	if (result != OK) {
+		//LOG_DEBUGF("USBD: Failed to send message to %s: %d.\n", UsbGetDescription(device), result);
+		return result;
+	}
+
+	while (timeout-- > 0 && (device->Error & Processing))
+		MicroDelay(1000);
+
+	if ((device->Error & Processing)) {
+		LOG_DEBUGF("USBD: Message to %s timeout reached.\n", UsbGetDescription(device));
+		return ErrorTimeout;
+	}
+
+	return result;
+}
+
 Result UsbControlMessage(struct UsbDevice *device, 
 	struct UsbPipeAddress pipe, void* buffer, u32 bufferLength,
 	struct UsbDeviceRequest *request, u32 timeout) {

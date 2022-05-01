@@ -7,6 +7,8 @@ ifeq ("$(TARGET)", "RPI1")
 	 CFLAGS += -Wa,-mcpu=arm1176jzf-s
 else ifeq ("$(TARGET)", "RPI2")
 	 CFLAGS += -DTARGET_RPI2 
+	 CFLAGS += -DLIB_BCM2835
+	 CFLAGS += -DLIB_DWC
 	 CFLAGS += -Wa,-march=armv7
 	 CFLAGS += -Wa,-mcpu=cortex-a7
 endif

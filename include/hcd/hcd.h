@@ -73,6 +73,13 @@ Result HcdSumbitControlMessage(struct UsbDevice *device,
 	struct UsbPipeAddress pipe, void* buffer, u32 bufferLength,
 	struct UsbDeviceRequest *request);
 
+/**
+	\brief Sends a Interrupt message to a device.
+*/
+Result HcdSumbitInterruptTransfer(struct UsbDevice *device, 
+	struct UsbPipeAddress pipe, void* buffer, u32 bufferLength,
+	struct UsbDeviceRequest *request);
+
 #include "dwc/designware20.h"
 
 #ifdef __cplusplus

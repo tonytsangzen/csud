@@ -206,6 +206,10 @@ enum HidUsagePageLed {
 	_HidUsagePageLed = 0xffff,
 };
 
+enum HidUsagePageDigitlizer {
+	_HidUsagePageDigitlizer = 0xffff,
+};
+	
 /**
 	\brief A full HID usage tag.
 
@@ -217,6 +221,7 @@ struct HidFullUsage {
 		enum HidUsagePageDesktop Desktop : 16;
 		enum HidUsagePageKeyboard Keyboard : 16;
 		enum HidUsagePageLed Led : 16;
+		enum HidUsagePageDigitlizer Digitlizer : 16;
 	};
 	enum HidUsagePage Page : 16;
 } __attribute__ ((__packed__));

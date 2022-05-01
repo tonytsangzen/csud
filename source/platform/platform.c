@@ -29,10 +29,11 @@ struct HeapAllocation {
 	struct HeapAllocation *Next;
 };
 
-static u8 Heap[0x4000] __attribute__((aligned(8))); // Support a maximum of 16KiB of allocations
+static u8 Heap[0x80000] __attribute__((aligned(8))); // Support a maximum of 16KiB of allocations
 static struct HeapAllocation Allocations[0x100]; // Support 256 allocations
 static struct HeapAllocation *FirstAllocation = HEAP_END, *FirstFreeAllocation = NULL;
 static u32 allocated = 0;
+
 
 static void* MemoryAllocateRaw(u32 size) {
 	struct HeapAllocation *Current, *Next;
@@ -458,15 +459,83 @@ void LogPrintF(char* format, u32 formatLength, ...) {
 }
 #endif
 
+#define DMA_BLOCK		64
+#define DMA_TOTAL		4096
+static void* DMABufHeap = NULL;
+static int	 DMABufMap[DMA_TOTAL/DMA_BLOCK] = {0};
+static int   DMAUID	= 1;
+
+void* MemoryAllocateDMA(u32 size){
+	int blk_cnt  = ((size + DMA_BLOCK - 1) / DMA_BLOCK); 
+	int blks = 0;
+	int alloc_start;
+
+	for(int i = 0; i < DMA_TOTAL/DMA_BLOCK; i++){
+
+		if(blks == 0)
+			alloc_start = i;
+
+		if(DMABufMap[i])
+			blks = 0;
+		else
+			blks++;
+
+		if(blks >= blk_cnt)
+			break;
+	}
+
+	if(blks < blk_cnt){
+		LOGF("DMA: Not enught memory has:%d request:%d!\n", blks, blk_cnt);
+		return NULL;
+	}
+
+	for(int i = alloc_start; i < alloc_start + blk_cnt ; i++){
+		DMABufMap[i] = DMAUID;
+	}
+	LOGF("DMA: alloc memory address:%08x block:%d\n", DMABufHeap + alloc_start * DMA_BLOCK, blk_cnt);
+	DMAUID++;
+	return DMABufHeap + alloc_start * DMA_BLOCK;
+}
+
+void MemoryDeallocateDMA(void *address){
+	if(address < DMABufHeap || address > DMABufHeap  + 4096)
+		return;
+
+	int alloc_start = (address - DMABufHeap) / DMA_BLOCK;
+
+	
+	int uid = DMABufMap[alloc_start];
+
+	for(int i = alloc_start; i < 4096 - alloc_start ; i++){
+		if(DMABufMap[i] != uid)
+			break;
+		DMABufMap[i] = 0;
+	}	
+	return;
+}
+
+void* ToPhysicalAddress(void *address){
+ if(address < DMABufHeap || address > DMABufHeap  + 4096)
+	return NULL;
+
+ return address - 0x80000000;
+}
+
 void PlatformLoad()
 {
 #ifdef MEM_INTERNAL_MANAGER_DEFAULT 
 	FirstAllocation = HEAP_END;
 	FirstFreeAllocation = NULL;
 #endif
-	MemorySet(Heap, 0, 0x4000);
+	MemorySet(Heap, 0, 0x80000);
 	allocated = 0;
 	for(u32 i=0; i<0x100; i++) {
 		MemorySet(&Allocations[i], 0, sizeof(struct HeapAllocation));
 	}
+
+	DMABufHeap = PlatformAllocateDMA(DMA_TOTAL);
+	MemorySet(DMABufHeap, 0, DMA_TOTAL);
+	MemorySet(DMABufMap, 0, sizeof(DMABufMap));
 }
+
+
