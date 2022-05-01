@@ -34,3 +34,4 @@ LIB_HID ?= 1
 LIB_KBD ?= 1
 LIB_HUB ?= 1
 LIB_MOUSE ?= 1
+LIB_TOUCH ?= 1

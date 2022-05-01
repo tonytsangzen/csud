@@ -26,6 +26,7 @@ volatile struct HostGlobalRegs *HostPhysical, *Host = NULL;
 volatile struct PowerReg *PowerPhysical, *Power = NULL;
 bool PhyInitialised = false;
 u8* databuffer = NULL;
+u8* requestbuffer = NULL;
 
 void DwcLoad() 
 {
@@ -271,7 +272,12 @@ Result HcdPrepareChannel(struct UsbDevice *device, u8 channel,
 
 void HcdTransmitChannel(u8 channel, void* buffer) {	
 #ifdef TARGET_RPI2
-	buffer =  (void *) ((u32) buffer | 0xC0000000); // map to no cache area
+//	LOGF("%s: ADDR:%d EP:%d D:%d T:%d \n", __func__,
+//	Host->Channel[channel].Characteristic.DeviceAddress,
+//	Host->Channel[channel].Characteristic.EndPointNumber,
+//	Host->Channel[channel].Characteristic.EndPointDirection,
+//	Host->Channel[channel].Characteristic.Type);
+	buffer =  (void *) (((u32) buffer - 0x80000000) | 0xC0000000); // map to no cache area
 #endif
 	ReadBackReg(&Host->Channel[channel].SplitControl);
 	Host->Channel[channel].SplitControl.CompleteSplit = false;
@@ -305,7 +311,7 @@ Result HcdChannelInterruptToError(struct UsbDevice *device, struct ChannelInterr
 	}
 	if (interrupts.NegativeAcknowledgement) {
 		device->Error =  NoAcknowledge;
-		LOG("HCD: NAK error in transfer.\n");
+		//LOG("HCD: NAK error in transfer.\n");
 		return ErrorDevice;
 	}
 	if (!interrupts.Acknowledgement) {
@@ -473,7 +479,7 @@ retry:
 		LOGF("HCD: Could not prepare data channel to %s.\n", UsbGetDescription(device));
 		return result;
 	}
-		
+
 	transfer = 0;
 	do {
 		packets = Host->Channel[channel].TransferSize.PacketCount;
@@ -500,6 +506,119 @@ retry:
 	return OK;
 }
 
+Result HcdChannelSendOneNoRetry(struct UsbDevice *device, 
+	struct UsbPipeAddress *pipe, u8 channel, void* buffer, u32 bufferLength, u32 bufferOffset,
+	struct UsbDeviceRequest *request) {
+	Result result;
+	u32 timeout, tries, globalTries, actualTries;
+	
+	SetReg(&Host->Channel[channel].Interrupt);
+	WriteThroughReg(&Host->Channel[channel].Interrupt);
+	ReadBackReg(&Host->Channel[channel].TransferSize);
+	ReadBackReg(&Host->Channel[channel].SplitControl);
+					
+	HcdTransmitChannel(channel, (u8*)buffer + bufferOffset);
+
+	timeout = 0;
+	do {
+		if (timeout++ == 8) {
+			//LOGF("HCD: Request to %s has timed out.\n", UsbGetDescription(device));
+			device->Error = ConnectionError;
+			return ErrorTimeout;
+		}
+		ReadBackReg(&Host->Channel[channel].Interrupt);
+		if (!Host->Channel[channel].Interrupt.Halt) MicroDelay(5000);
+		else break;
+	} while (true);
+	ReadBackReg(&Host->Channel[channel].TransferSize);
+	
+	if (pipe->Speed != High) {
+		if ((Host->Channel[channel].Interrupt.Acknowledgement) && (Host->Channel[channel].SplitControl.SplitEnable)) {
+			for (tries = 0; tries < 3; tries++) {
+				SetReg(&Host->Channel[channel].Interrupt);
+				WriteThroughReg(&Host->Channel[channel].Interrupt);
+
+				ReadBackReg(&Host->Channel[channel].SplitControl);
+				Host->Channel[channel].SplitControl.CompleteSplit = true;
+				WriteThroughReg(&Host->Channel[channel].SplitControl);
+				
+				Host->Channel[channel].Characteristic.Enable = true;
+				Host->Channel[channel].Characteristic.Disable = false;
+				WriteThroughReg(&Host->Channel[channel].Characteristic);
+
+				timeout = 0;
+				do {
+					if (timeout++ == RequestTimeout) {
+						//LOGF("HCD: Request split completion to %s has timed out.\n", UsbGetDescription(device));
+						device->Error = ConnectionError;
+						return ErrorTimeout;
+					}
+					ReadBackReg(&Host->Channel[channel].Interrupt);
+					if (!Host->Channel[channel].Interrupt.Halt) MicroDelay(100);
+					else break;
+				} while (true);
+				if (!Host->Channel[channel].Interrupt.NotYet) break;
+			}
+
+			if (Host->Channel[channel].Interrupt.NegativeAcknowledgement) {
+				return result;
+			} else if (Host->Channel[channel].Interrupt.TransactionError) {
+				return result;
+			}
+	
+			if ((result = HcdChannelInterruptToError(device, Host->Channel[channel].Interrupt, false)) != OK) {
+				LOG_DEBUGF("HCD: Control message to %#x: %02x%02x%02x%02x %02x%02x%02x%02x.\n", *(u32*)pipe, 
+					((u8*)request)[0], ((u8*)request)[1], ((u8*)request)[2], ((u8*)request)[3],
+					((u8*)request)[4], ((u8*)request)[5], ((u8*)request)[6], ((u8*)request)[7]);
+				LOGF("HCD: Request split completion to %s failed.\n", UsbGetDescription(device));
+				return result;
+			}
+		} else if (Host->Channel[channel].Interrupt.NegativeAcknowledgement) {
+			return result;
+		} else if (Host->Channel[channel].Interrupt.TransactionError) {
+			result;
+		}				
+	} else {				
+		if ((result = HcdChannelInterruptToError(device, Host->Channel[channel].Interrupt, !Host->Channel[channel].SplitControl.SplitEnable)) != OK) {
+			return ErrorRetry;
+		}
+	}
+
+	return OK;
+}
+
+Result HcdChannelSendNoRetry(struct UsbDevice *device, 
+	struct UsbPipeAddress *pipe, u8 channel, void* buffer, u32 bufferLength, 
+	struct UsbDeviceRequest *request, enum PacketId packetId) {
+	Result result;
+	u32 packets, transfer, tries;
+	
+	if ((result = HcdPrepareChannel(device, channel, bufferLength, packetId, pipe)) != OK) {		
+		device->Error = ConnectionError;
+		LOGF("HCD: Could not prepare data channel to %s.\n", UsbGetDescription(device));
+		return result;
+	}
+
+	transfer = 0;
+	do {
+		packets = Host->Channel[channel].TransferSize.PacketCount;
+		if ((result = HcdChannelSendOneNoRetry(device, pipe, channel, buffer, bufferLength, transfer, request)) != OK) {
+			return result;
+		}
+		
+		ReadBackReg(&Host->Channel[channel].TransferSize);		
+		transfer = bufferLength - Host->Channel[channel].TransferSize.TransferSize;
+		if (packets == Host->Channel[channel].TransferSize.PacketCount) break;
+	} while (Host->Channel[channel].TransferSize.PacketCount > 0);
+
+	if (packets == Host->Channel[channel].TransferSize.PacketCount) {
+		device->Error = ConnectionError;
+		return ErrorDevice;
+	}
+
+	return OK;
+}
+
 Result HcdSumbitControlMessage(struct UsbDevice *device, 
 	struct UsbPipeAddress pipe, void* buffer, u32 bufferLength,
 	struct UsbDeviceRequest *request) {
@@ -520,8 +639,8 @@ Result HcdSumbitControlMessage(struct UsbDevice *device,
 	tempPipe.MaxSize = pipe.MaxSize;
 	tempPipe.Type = Control;
 	tempPipe.Direction = Out;
-	
-	if ((result = HcdChannelSendWait(device, &tempPipe, 0, request, 8, request, Setup)) != OK) {		
+	memcpy(requestbuffer, request, sizeof(struct UsbDeviceRequest));	
+	if ((result = HcdChannelSendWait(device, &tempPipe, 0, requestbuffer, 8, request, Setup)) != OK) {		
 		LOGF("HCD: Could not send SETUP to %s.\n", UsbGetDescription(device));
 		return OK;
 	}
@@ -585,6 +704,55 @@ Result HcdSumbitControlMessage(struct UsbDevice *device,
 	return OK;
 }
 	
+Result HcdSumbitInterruptTransfer(struct UsbDevice *device, 
+	struct UsbPipeAddress pipe, void* buffer, u32 bufferLength,
+	struct UsbDeviceRequest *request) {
+	Result result;
+	struct UsbPipeAddress tempPipe;
+
+	device->Error = Processing;
+	device->LastTransfer = 0;
+
+	// Data
+	if (pipe.Direction == Out) {
+		MemoryCopy(databuffer, buffer, bufferLength);
+	}
+	tempPipe.Speed = pipe.Speed;
+	tempPipe.Device = pipe.Device;
+	tempPipe.EndPoint = pipe.EndPoint;
+	tempPipe.MaxSize = pipe.MaxSize;
+	tempPipe.Type = Bulk;
+	tempPipe.Direction = pipe.Direction;
+	
+	if ((result = HcdChannelSendNoRetry(device, &tempPipe, 1, databuffer, bufferLength, request, Data0)) != OK) {		
+		//LOGF("HCD: Could not send DATA to %s.\n", UsbGetDescription(device));
+		return result;
+	}
+					
+	ReadBackReg(&Host->Channel[0].TransferSize);
+	if (pipe.Direction == In) {
+		if (Host->Channel[0].TransferSize.TransferSize <= bufferLength)
+			device->LastTransfer = bufferLength - Host->Channel[0].TransferSize.TransferSize;
+		else{
+			LOG_DEBUGF("HCD: Weird transfer.. %d/%d bytes received.\n", Host->Channel[0].TransferSize.TransferSize, bufferLength);
+			LOG_DEBUGF("HCD: Message %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x ...\n", 
+				((u8*)databuffer)[0x0],((u8*)databuffer)[0x1],((u8*)databuffer)[0x2],((u8*)databuffer)[0x3],
+				((u8*)databuffer)[0x4],((u8*)databuffer)[0x5],((u8*)databuffer)[0x6],((u8*)databuffer)[0x7],
+				((u8*)databuffer)[0x8],((u8*)databuffer)[0x9],((u8*)databuffer)[0xa],((u8*)databuffer)[0xb],
+				((u8*)databuffer)[0xc],((u8*)databuffer)[0xd],((u8*)databuffer)[0xe],((u8*)databuffer)[0xf]);
+			device->LastTransfer = bufferLength;
+		}
+		MemoryCopy(buffer, databuffer, device->LastTransfer);
+	}
+	else {
+		device->LastTransfer = bufferLength;
+	}
+
+	device->Error = NoError;
+
+	return OK;
+}
+
 Result HcdInitialise() {	
 	volatile Result result;
 
@@ -688,8 +856,12 @@ Result HcdStart() {
 		return ErrorDevice;
 	}
 
-	if ((databuffer = MemoryAllocate(1024)) == NULL)
+	if ((databuffer = MemoryAllocateDMA(1024)) == NULL)
 		return ErrorMemory;
+
+	if ((requestbuffer = MemoryAllocateDMA(64)) == NULL)
+		return ErrorMemory;
+
 
 	ReadBackReg(&Core->Usb);
 	Core->Usb.UlpiDriveExternalVbus = 0;

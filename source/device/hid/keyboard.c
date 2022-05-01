@@ -282,7 +282,6 @@ Result KeyboardPoll(u32 keyboardAddress) {
 	data = (struct KeyboardDevice*)((struct HidDevice*)keyboards[keyboardNumber]->DriverData)->DriverData;
 	if ((result = HidReadDevice(keyboards[keyboardNumber], data->KeyReport->Index)) != OK) {
 		if (result != ErrorDisconnected)
-			LOGF("KBD: Could not get key report from %s.\n", UsbGetDescription(keyboards[keyboardNumber]));
 		return result;
 	}
 

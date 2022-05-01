@@ -21,3 +21,11 @@ OBJECTS += $(BUILD)mouse.c.o
 $(BUILD)mouse.c.o: $(DIR)mouse.c $(INCDIR)device/hid/hid.h $(INCDIR)device/hid/mouse.h $(INCDIR)device/hid/report.h $(INCDIR)platform/platform.h $(INCDIR)usbd/device.h $(INCDIR)types.h $(INCDIR)usbd/usbd.h
 	$(GCC) $< -o $@
 endif
+
+ifeq ("$(LIB_TOUCH)", "1")
+CFLAGS += -DLIB_TOUCH
+OBJECTS += $(BUILD)touch.c.o
+
+$(BUILD)touch.c.o: $(DIR)touch.c $(INCDIR)device/hid/hid.h $(INCDIR)device/hid/touch.h $(INCDIR)device/hid/report.h $(INCDIR)platform/platform.h $(INCDIR)usbd/device.h $(INCDIR)types.h $(INCDIR)usbd/usbd.h
+	$(GCC) $< -o $@
+endif

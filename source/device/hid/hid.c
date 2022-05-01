@@ -21,7 +21,7 @@
 #include <types.h>
 #include <usbd/usbd.h>
 
-#define HidMessageTimeout 10
+#define HidMessageTimeout 16
 
 Result (*HidUsageAttach[HidUsageAttachCount])(struct UsbDevice *device, u32 interfaceNumber);
 
@@ -31,16 +31,16 @@ void HidLoad()
 	InterfaceClassAttach[InterfaceClassHid] = HidAttach;
 }
 
-Result HidGetReport(struct UsbDevice *device, enum HidReportType reportType, 
+Result HidGetReport(struct UsbDevice *device, u8 endPoint, enum HidReportType reportType, 
 	u8 reportId, u8 interface, u32 bufferLength, void* buffer) {
 	Result result;
-	
-	if ((result = UsbControlMessage(
+	//LOGF("%s: TYPE:%d ID:%d INTERFACE:%d LEN:%d\n", __func__, reportType, reportId, interface, bufferLength);	
+	if ((result = UsbInterruptMessage(
 		device, 
 		(struct UsbPipeAddress) { 
 			.Type = Control, 
 			.Speed = device->Speed, 
-			.EndPoint = 0 , 
+			.EndPoint = endPoint , 
 			.Device = device->Number, 
 			.Direction = In,
 			.MaxSize = SizeFromNumber(device->Descriptor.MaxPacketSize0),
@@ -166,18 +166,16 @@ Result HidReadDevice(struct UsbDevice *device, u8 reportNumber) {
 	if ((report->ReportBuffer == NULL) && (report->ReportBuffer = (u8*)MemoryAllocate(size)) == NULL) {
 		return ErrorMemory;
 	}
-	if ((result = HidGetReport(device, report->Type, report->Id, data->ParserResult->Interface, size, report->ReportBuffer)) != OK) {
-		if (result != ErrorDisconnected)
-			LOGF("HID: Could not read %s report %d.\n", UsbGetDescription(device), report);
-		return result;
+	if ((result = HidGetReport(device, 1, report->Type, report->Id, data->ParserResult->Interface, size, report->ReportBuffer)) != OK) {
+		//if (result != ErrorDisconnected)
+		LOGF("HID: Could not read %s report %d error %d.\n", UsbGetDescription(device), report, result);
+		return 0;
 	}
 	
 	// Uncomment this for a quick hack to view 8 bytes worth of report.
-	/*
 	LOGF("HID: %s.Report%d: %02x%02x%02x%02x %02x%02x%02x%02x.\n", UsbGetDescription(device), reportNumber + 1,
 		*(report->ReportBuffer + 0), *(report->ReportBuffer + 1), *(report->ReportBuffer + 2), *(report->ReportBuffer + 3),
 		*(report->ReportBuffer + 4), *(report->ReportBuffer + 5), *(report->ReportBuffer + 6), *(report->ReportBuffer + 7));
-	*/
 
 	for (u32 i = 0; i < report->FieldCount; i++) {
 		field = &report->Fields[i];
@@ -207,6 +205,34 @@ Result HidReadDevice(struct UsbDevice *device, u8 reportNumber) {
 	}
 
 	return OK;
+}
+
+Result HidReadDeviceRaw(struct UsbDevice *device, u8 endPoint, u8 reportNumber, u8* buffer) {
+	struct HidDevice *data;
+	struct HidParserResult *parse;
+	struct HidParserReport *report;
+	struct HidParserField *field;
+	Result result;
+	u32 size;
+	
+	data = (struct HidDevice*)device->DriverData;
+	parse = data->ParserResult;
+	report = parse->Report[reportNumber];
+	size = ((report->ReportLength + 7) / 8);
+	if(size < 8)
+		size = 8;
+	if ((result = HidGetReport(device, endPoint, report->Type, report->Id, data->ParserResult->Interface, size, buffer)) != OK) {
+		//if (result != ErrorDisconnected)
+		//LOGF("HID: Could not read %s report %d error %d.\n", UsbGetDescription(device), report, result);
+		return result;
+	}
+	
+	// Uncomment this for a quick hack to view 8 bytes worth of report.
+	// LOGF("HID: %s.Report[%d] %d: %02x %02x %02x %02x	%02x %02x %02x %02x.\n", UsbGetDescription(device), reportNumber + 1, size,
+	// 	*(buffer + 0), *(buffer + 1), *(buffer + 2), *(buffer + 3),
+	// 	*(buffer + 4), *(buffer + 5), *(buffer + 6), *(buffer + 7));
+
+	return result;
 }
 
 Result HidWriteDevice(struct UsbDevice *device, u8 reportNumber) {
@@ -539,6 +565,8 @@ void HidEnumerateActionAddField(void* data, u16 tag, u32 value) {
 				break; 
 			}
 		while (fields->count > 0) {
+			report->FieldCount >= 16;
+				break;
 			if (*(u32*)fields->usage == 0xffffffff) fields->usage++;
 			*(u32*)&(report->Fields[report->FieldCount].Attributes) = value;
 			report->Fields[report->FieldCount].Count = report->Fields[report->FieldCount].Attributes.Variable ? 1 : fields->count;
@@ -694,7 +722,7 @@ Result HidParseReportDescriptor(struct UsbDevice *device, void* descriptor, u16 
 	data = (struct HidDevice*)device->DriverData;
 
 	HidEnumerateReport(descriptor, length, HidEnumerateActionCountReport, &reports);
-	LOG_DEBUGF("HID: Found %d reports.", reports.reportCount);
+	LOG_DEBUGF("HID: Found %d reports.\n", reports.reportCount);
 
 	if ((parse = MemoryAllocate(sizeof(struct HidParserResult) + 4 * reports.reportCount)) == NULL) {
 		result = ErrorMemory;
@@ -919,6 +947,10 @@ Result HidAttach(struct UsbDevice *device, u32 interfaceNumber) {
 		(u16)data->ParserResult->Application.Desktop < HidUsageAttachCount &&
 		HidUsageAttach[(u16)data->ParserResult->Application.Desktop] != NULL) {
 		HidUsageAttach[(u16)data->ParserResult->Application.Desktop](device, interfaceNumber);
+	}else if((data->ParserResult->Application.Page == Digitlizer) &&
+		(u16)data->ParserResult->Application.Digitlizer < HidUsageAttachCount &&
+		HidUsageAttach[(u16)data->ParserResult->Application.Digitlizer] != NULL){
+		HidUsageAttach[(u16)data->ParserResult->Application.Digitlizer](device, interfaceNumber);
 	}
 
 	return OK;

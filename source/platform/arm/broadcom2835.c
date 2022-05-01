@@ -20,11 +20,12 @@ void Bcm2835Load()
 #ifndef TYPE_DRIVER
 
 void MicroDelay(u32 delay) {
-	volatile u64* timeStamp = (u64*)(_RASPI_MMIO_BASE+0x0003004);
-	u64 stop = *timeStamp + delay;
+	//volatile u64* timeStamp = (u64*)(_RASPI_MMIO_BASE+0x0003004);
+	//u64 stop = *timeStamp + delay;
 
-	while (*timeStamp < stop) 
-		__asm__("nop");
+	//while (*timeStamp < stop) 
+	//	__asm__("nop");
+	usleep(delay);
 }
 
 Result PowerOnUsb() {
