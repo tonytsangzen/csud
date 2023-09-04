@@ -128,6 +128,25 @@ Result TouchGetEvent(struct TouchEvent* event){
 			memcpy(event, &_event, sizeof(struct TouchEvent));
 			return OK;
 		}
+	}else if (touchDev->Descriptor.ProductId == 0xa){
+		ret = HidReadDeviceRaw(touchDev, 2, 1, buffer);
+		if(ret == 0){
+			_event.event = !!(buffer[1]&0x40);
+			int a = buffer[2];
+			int b = buffer[3];
+			int c = b*256 + a;
+			_event.x = c;
+			a = buffer[4];
+			b = buffer[5];
+			c = b*256 + a;
+			_event.y = c;
+			memcpy(event, &_event, sizeof(struct TouchEvent));
+			return OK;
+		}else if(_event.event){
+			_event.event = 0;
+			memcpy(event, &_event, sizeof(struct TouchEvent));
+			return OK;
+		}
 	}else{
 		//Unknow device
 		return ErrorDevice;
