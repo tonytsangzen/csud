@@ -9,6 +9,7 @@
 *	in the Raspberry Pi. Compiled conditionally on LIB_BCM2835=1.
 ******************************************************************************/
 #include <configuration.h>
+#include <usbd/usbd.h>
 #include <platform/platform.h>
 #include <types.h>
 
@@ -20,7 +21,7 @@ void Bcm2835Load()
 #ifndef TYPE_DRIVER
 
 void MicroDelay(u32 delay) {
-	//volatile u64* timeStamp = (u64*)(_RASPI_MMIO_BASE+0x0003004);
+	//volatile u64* timeStamp = (u64*)(_pi_mmio_base+0x0003004);
 	//u64 stop = *timeStamp + delay;
 
 	//while (*timeStamp < stop) 
@@ -32,7 +33,7 @@ Result PowerOnUsb() {
 	volatile u32* mailbox;
 	u32 result;
 
-	mailbox = (u32*)(_RASPI_MMIO_BASE+0x0000B880);
+	mailbox = (u32*)(_pi_mmio_base+0x0000B880);
 	while (mailbox[6] & 0x80000000);
 	mailbox[8] = 0x80;
 	do {
