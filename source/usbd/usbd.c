@@ -44,8 +44,9 @@ void UsbLoad()
 		InterfaceClassAttach[i] = NULL;
 }
 
-Result UsbInitialise() {
+Result UsbInitialise(u32 v_mmio_base) {
 	Result result;
+	_v_mmio_base = v_mmio_base;
 
 	for (u32 number = 0; number < MaximumDevices; number++) {
 		Devices[number] = NULL;

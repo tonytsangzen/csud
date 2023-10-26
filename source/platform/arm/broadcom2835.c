@@ -16,8 +16,6 @@
 void Bcm2835Load()
 {
 	LOG_DEBUG("CSUD: Broadcom2835 driver version 0.1.\n");
-	if(_v_mmio_base == 0)
-		_v_mmio_base = _RASPI_MMIO_BASE;
 }
 
 #ifndef TYPE_DRIVER
