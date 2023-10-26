@@ -14,6 +14,8 @@
 #include <usbd/descriptors.h>
 #include <usbd/usbd.h>
 
+u32 _v_mmio_base = 0;
+
 /** The default timeout in ms of control transfers. */
 #define ControlMessageTimeout 10
 /** The maximum number of devices that can be connected. */

@@ -23,6 +23,8 @@ extern "C"
 #include <usbd/devicerequest.h>
 #include <usbd/pipe.h>
 
+extern u32 _v_mmio_base;
+
 /**
 	\brief Performs all necessary operationg to start the USB driver.
 

@@ -13,17 +13,17 @@
 #include <platform/platform.h>
 #include <types.h>
 
-u32 _pi_mmio_base = _RASPI_MMIO_BASE;
-
 void Bcm2835Load()
 {
 	LOG_DEBUG("CSUD: Broadcom2835 driver version 0.1.\n");
+	if(_v_mmio_base == 0)
+		_v_mmio_base = _RASPI_MMIO_BASE;
 }
 
 #ifndef TYPE_DRIVER
 
 void MicroDelay(u32 delay) {
-	//volatile u64* timeStamp = (u64*)(_pi_mmio_base+0x0003004);
+	//volatile u64* timeStamp = (u64*)(_v_mmio_base+0x0003004);
 	//u64 stop = *timeStamp + delay;
 
 	//while (*timeStamp < stop) 
@@ -35,7 +35,7 @@ Result PowerOnUsb() {
 	volatile u32* mailbox;
 	u32 result;
 
-	mailbox = (u32*)(_pi_mmio_base+0x0000B880);
+	mailbox = (u32*)(_v_mmio_base+0x0000B880);
 	while (mailbox[6] & 0x80000000);
 	mailbox[8] = 0x80;
 	do {
