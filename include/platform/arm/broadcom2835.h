@@ -23,6 +23,8 @@ extern "C"
 #define MEM_INTERNAL_MANAGER_DEFAULT
 #endif
 
+extern u32 _pi_mmio_base;
+
 #ifdef __cplusplus
 }
 #endif

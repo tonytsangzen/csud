@@ -13,6 +13,8 @@
 #include <platform/platform.h>
 #include <types.h>
 
+u32 _pi_mmio_base = _RASPI_MMIO_BASE;
+
 void Bcm2835Load()
 {
 	LOG_DEBUG("CSUD: Broadcom2835 driver version 0.1.\n");
