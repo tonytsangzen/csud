@@ -22,9 +22,9 @@ extern "C"
 
 #ifdef HCD_DESIGNWARE_20
 
-#define ReceiveFifoSize 20480 /* 16 to 32768 */
-#define NonPeriodicFifoSize 20480 /* 16 to 32768 */
-#define PeriodicFifoSize 20480 /* 16 to 32768 */
+#define ReceiveFifoSize 2048 /* 16 to 32768 */
+#define NonPeriodicFifoSize 2048 /* 16 to 32768 */
+#define PeriodicFifoSize 2048 /* 16 to 32768 */
 #define ChannelCount 16
 #define RequestTimeout 5000
 
