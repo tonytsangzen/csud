@@ -31,7 +31,8 @@ else
 endif
 
 LIB_HID ?= 1
-LIB_KBD ?= 1
 LIB_HUB ?= 1
-LIB_MOUSE ?= 1
+LIB_KBD ?= 0
+LIB_MOUSE ?= 0
 LIB_TOUCH ?= 1
+LIB_UCONSOLE ?= 1

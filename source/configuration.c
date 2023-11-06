@@ -67,5 +67,8 @@ void ConfigurationLoad() {
 #ifdef LIB_MOUSE
 	MouseLoad();
 #endif
+#ifdef LIB_UCONSOLE
+	uConsoleLoad();
+#endif 
 	TouchLoad();
 }

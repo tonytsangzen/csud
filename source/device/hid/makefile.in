@@ -22,6 +22,14 @@ $(BUILD)mouse.c.o: $(DIR)mouse.c $(INCDIR)device/hid/hid.h $(INCDIR)device/hid/m
 	$(GCC) $< -o $@
 endif
 
+ifeq ("$(LIB_UCONSOLE)", "1")
+CFLAGS += -DLIB_UCONSOLE
+OBJECTS += $(BUILD)uconsole.c.o
+
+$(BUILD)uconsole.c.o: $(DIR)uconsole.c $(INCDIR)device/hid/hid.h $(INCDIR)device/hid/mouse.h $(INCDIR)device/hid/report.h $(INCDIR)platform/platform.h $(INCDIR)usbd/device.h $(INCDIR)types.h $(INCDIR)usbd/usbd.h
+	$(GCC) $< -o $@
+endif
+
 ifeq ("$(LIB_TOUCH)", "1")
 CFLAGS += -DLIB_TOUCH
 OBJECTS += $(BUILD)touch.c.o

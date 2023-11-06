@@ -607,7 +607,14 @@ void HidEnumerateActionAddField(void* data, u16 tag, u32 value) {
 		if (*(u32*)fields->usage == 0xffffffff) fields->usage++;
 		switch ((enum HidMainCollection)value) {
 		case Application:			
-			*(u32*)&fields->result->Application = *(u32*)fields->usage;
+			/* FIXME:
+			*  only support generic desktop & Digitlizer
+			*/
+			if(((struct HidFullUsage*)fields->usage)->Page == GenericDesktopControl ||
+				((struct HidFullUsage*)fields->usage)->Page == Digitlizer ||
+				((struct HidFullUsage*)fields->usage)->Page == Consumer){
+				*(u32*)&fields->result->Application = *(u32*)fields->usage;
+			}
 			break;
 		case Physical:
 			*(u32*)&fields->physical = *(u32*)fields->usage;
@@ -951,8 +958,11 @@ Result HidAttach(struct UsbDevice *device, u32 interfaceNumber) {
 		(u16)data->ParserResult->Application.Digitlizer < HidUsageAttachCount &&
 		HidUsageAttach[(u16)data->ParserResult->Application.Digitlizer] != NULL){
 		HidUsageAttach[(u16)data->ParserResult->Application.Digitlizer](device, interfaceNumber);
+	}else if((data->ParserResult->Application.Page == Consumer) &&
+		(u16)data->ParserResult->Application.Desktop < HidUsageAttachCount &&
+		HidUsageAttach[(u16)data->ParserResult->Application.Desktop] != NULL){
+		HidUsageAttach[(u16)data->ParserResult->Application.Desktop](device, interfaceNumber);
 	}
-
 	return OK;
 deallocate:
 	if (reportDescriptor != NULL) MemoryDeallocate(reportDescriptor);
