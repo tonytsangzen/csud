@@ -311,7 +311,7 @@ Result HcdChannelInterruptToError(struct UsbDevice *device, struct ChannelInterr
 	}
 	if (interrupts.NegativeAcknowledgement) {
 		device->Error =  NoAcknowledge;
-		//LOG("HCD: NAK error in transfer.\n");
+		LOG("HCD: NAK error in transfer.\n");
 		return ErrorDevice;
 	}
 	if (!interrupts.Acknowledgement) {
@@ -506,29 +506,36 @@ retry:
 	return OK;
 }
 
+void _udelay(volatile u32  us){
+	while(us--);
+}
+
 Result HcdChannelSendOneNoRetry(struct UsbDevice *device, 
 	struct UsbPipeAddress *pipe, u8 channel, void* buffer, u32 bufferLength, u32 bufferOffset,
 	struct UsbDeviceRequest *request) {
-	Result result;
+	Result result = -1;
 	u32 timeout, tries, globalTries, actualTries;
 	
 	SetReg(&Host->Channel[channel].Interrupt);
 	WriteThroughReg(&Host->Channel[channel].Interrupt);
 	ReadBackReg(&Host->Channel[channel].TransferSize);
 	ReadBackReg(&Host->Channel[channel].SplitControl);
-					
+	ReadBackReg(&Host->Channel[channel].Interrupt);
 	HcdTransmitChannel(channel, (u8*)buffer + bufferOffset);
 
 	timeout = 0;
 	do {
-		if (timeout++ == 8) {
-			//LOGF("HCD: Request to %s has timed out.\n", UsbGetDescription(device));
+		if (timeout++ >= 150) {
+			LOGF("HCD: Request to %s has timed out.\n", UsbGetDescription(device));
 			device->Error = ConnectionError;
 			return ErrorTimeout;
 		}
 		ReadBackReg(&Host->Channel[channel].Interrupt);
-		if (!Host->Channel[channel].Interrupt.Halt) MicroDelay(5000);
-		else break;
+		//LOG_DEBUGF("2 %d: %08x\n", channel, Host->Channel[channel].Interrupt);
+		if (!Host->Channel[channel].Interrupt.Halt) 
+			_udelay(10);
+		else 
+			break;
 	} while (true);
 	ReadBackReg(&Host->Channel[channel].TransferSize);
 	
@@ -548,13 +555,13 @@ Result HcdChannelSendOneNoRetry(struct UsbDevice *device,
 
 				timeout = 0;
 				do {
-					if (timeout++ == RequestTimeout) {
-						//LOGF("HCD: Request split completion to %s has timed out.\n", UsbGetDescription(device));
+					if (timeout++ >= 150) {
+						LOGF("HCD: Request split completion to %s has timed out.\n", UsbGetDescription(device));
 						device->Error = ConnectionError;
 						return ErrorTimeout;
 					}
 					ReadBackReg(&Host->Channel[channel].Interrupt);
-					if (!Host->Channel[channel].Interrupt.Halt) MicroDelay(100);
+					if (!Host->Channel[channel].Interrupt.Halt)_udelay(10);
 					else break;
 				} while (true);
 				if (!Host->Channel[channel].Interrupt.NotYet) break;
@@ -576,14 +583,13 @@ Result HcdChannelSendOneNoRetry(struct UsbDevice *device,
 		} else if (Host->Channel[channel].Interrupt.NegativeAcknowledgement) {
 			return result;
 		} else if (Host->Channel[channel].Interrupt.TransactionError) {
-			result;
+			return result;
 		}				
 	} else {				
 		if ((result = HcdChannelInterruptToError(device, Host->Channel[channel].Interrupt, !Host->Channel[channel].SplitControl.SplitEnable)) != OK) {
 			return ErrorRetry;
 		}
 	}
-
 	return OK;
 }
 
@@ -592,7 +598,6 @@ Result HcdChannelSendNoRetry(struct UsbDevice *device,
 	struct UsbDeviceRequest *request, enum PacketId packetId) {
 	Result result;
 	u32 packets, transfer, tries;
-	
 	if ((result = HcdPrepareChannel(device, channel, bufferLength, packetId, pipe)) != OK) {		
 		device->Error = ConnectionError;
 		LOGF("HCD: Could not prepare data channel to %s.\n", UsbGetDescription(device));
@@ -611,11 +616,11 @@ Result HcdChannelSendNoRetry(struct UsbDevice *device,
 		if (packets == Host->Channel[channel].TransferSize.PacketCount) break;
 	} while (Host->Channel[channel].TransferSize.PacketCount > 0);
 
+
 	if (packets == Host->Channel[channel].TransferSize.PacketCount) {
 		device->Error = ConnectionError;
 		return ErrorDevice;
 	}
-
 	return OK;
 }
 
@@ -709,6 +714,7 @@ Result HcdSumbitInterruptTransfer(struct UsbDevice *device,
 	struct UsbDeviceRequest *request) {
 	Result result;
 	struct UsbPipeAddress tempPipe;
+	static  int pid = Data0;
 
 	device->Error = Processing;
 	device->LastTransfer = 0;
@@ -716,6 +722,8 @@ Result HcdSumbitInterruptTransfer(struct UsbDevice *device,
 	// Data
 	if (pipe.Direction == Out) {
 		MemoryCopy(databuffer, buffer, bufferLength);
+	}else{
+		memset(databuffer, 0, bufferLength);
 	}
 	tempPipe.Speed = pipe.Speed;
 	tempPipe.Device = pipe.Device;
@@ -723,12 +731,20 @@ Result HcdSumbitInterruptTransfer(struct UsbDevice *device,
 	tempPipe.MaxSize = pipe.MaxSize;
 	tempPipe.Type = Bulk;
 	tempPipe.Direction = pipe.Direction;
-	
-	if ((result = HcdChannelSendNoRetry(device, &tempPipe, 1, databuffer, bufferLength, request, Data0)) != OK) {		
-		//LOGF("HCD: Could not send DATA to %s.\n", UsbGetDescription(device));
+
+
+	if ((result = HcdChannelSendNoRetry(device, &tempPipe, 1, databuffer, bufferLength, request, pid)) != OK) {		
+		//LOG_DEBUGF("HCD: Could not send DATA to %s.\n", UsbGetDescription(device));
 		return result;
 	}
-					
+	if(databuffer[0] == 0){
+		if(pid == Data0)
+			pid = Data1;
+		else
+			pid = Data0;	
+	}
+
+				
 	ReadBackReg(&Host->Channel[0].TransferSize);
 	if (pipe.Direction == In) {
 		if (Host->Channel[0].TransferSize.TransferSize <= bufferLength)

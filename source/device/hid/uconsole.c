@@ -6,7 +6,7 @@
 #include <usbd/device.h>
 #include <usbd/usbd.h>
 
-struct UsbDevice* uconsoleDev = NULL;
+static struct UsbDevice* uconsoleDev = NULL;
 
 Result uConsoleAttach(struct UsbDevice *device, u32 interface) {
     if(device->Descriptor.ProductId == 0x24 && device->Descriptor.VendorId == 0x1EAF){
@@ -34,17 +34,14 @@ Result uConsolePoll(u32 keyboardAddress) {
 	return OK;
 }
 
+
 Result uConsoleGetEvent(u8* event){
-	u8 buffer[128] = {0};
 	Result ret;
 
 	if(uconsoleDev == NULL)
 		return ErrorDevice;
 
-	ret = HidReadDeviceRaw(uconsoleDev, 1, 1, buffer);
-	if(ret == 0){
-        printf("%02x %02x %02x %02x\n", buffer[0], buffer[1], buffer[2], buffer[3]);
-        memcpy(event, buffer, 8);
-    }	
+	ret = HidReadDeviceRaw(uconsoleDev, 1, 1, event);
+
 	return ret;
 }

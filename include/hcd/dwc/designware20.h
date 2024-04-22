@@ -26,7 +26,7 @@ extern "C"
 #define NonPeriodicFifoSize 2048 /* 16 to 32768 */
 #define PeriodicFifoSize 2048 /* 16 to 32768 */
 #define ChannelCount 16
-#define RequestTimeout 5000
+#define RequestTimeout 5
 
 /**
 	\brief The addresses of all core registers used by the HCD.

@@ -97,8 +97,8 @@ Result UsbInterruptMessage(struct UsbDevice *device,
 		return result;
 	}
 
-	while (timeout-- > 0 && (device->Error & Processing))
-		MicroDelay(1000);
+	// while (timeout-- > 0 && (device->Error & Processing))
+	// 	MicroDelay(1000);
 
 	if ((device->Error & Processing)) {
 		LOG_DEBUGF("USBD: Message to %s timeout reached.\n", UsbGetDescription(device));
