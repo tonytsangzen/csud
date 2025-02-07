@@ -277,7 +277,7 @@ void HcdTransmitChannel(u8 channel, void* buffer) {
 //	Host->Channel[channel].Characteristic.EndPointNumber,
 //	Host->Channel[channel].Characteristic.EndPointDirection,
 //	Host->Channel[channel].Characteristic.Type);
-	buffer =  (void *) (((u32) buffer - 0x80000000) | 0xC0000000); // map to no cache area
+	buffer = ToPhysicalAddress(buffer) | 0xC0000000;// map to no cache area
 #endif
 	ReadBackReg(&Host->Channel[channel].SplitControl);
 	Host->Channel[channel].SplitControl.CompleteSplit = false;
@@ -771,7 +771,6 @@ Result HcdSumbitInterruptTransfer(struct UsbDevice *device,
 
 Result HcdInitialise() {	
 	volatile Result result;
-
 	if (sizeof(struct CoreGlobalRegs) != 0x400 || sizeof(struct HostGlobalRegs) != 0x400 || sizeof(struct PowerReg) != 0x4) {
 		LOGF("HCD: Incorrectly compiled driver. HostGlobalRegs: %#x (0x400), CoreGlobalRegs: %#x (0x400), PowerReg: %#x (0x4).\n", 
 			sizeof(struct HostGlobalRegs), sizeof(struct CoreGlobalRegs), sizeof(struct PowerReg));
