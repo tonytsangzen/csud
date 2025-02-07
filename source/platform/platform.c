@@ -518,7 +518,7 @@ void* ToPhysicalAddress(void *address){
  if(address < DMABufHeap || address > DMABufHeap  + 4096)
 	return NULL;
 
- return address - 0x80000000;
+ return PlatformDMAVir2Phy(address);
 }
 
 void PlatformLoad()

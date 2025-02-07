@@ -277,7 +277,7 @@ void HcdTransmitChannel(u8 channel, void* buffer) {
 //	Host->Channel[channel].Characteristic.EndPointNumber,
 //	Host->Channel[channel].Characteristic.EndPointDirection,
 //	Host->Channel[channel].Characteristic.Type);
-	buffer =  (void *) (((u32) buffer - 0x80000000) | 0xC0000000); // map to no cache area
+	buffer =  ToPhysicalAddress(buffer) | 0xC0000000; // map to no cache area
 #endif
 	ReadBackReg(&Host->Channel[channel].SplitControl);
 	Host->Channel[channel].SplitControl.CompleteSplit = false;
