@@ -85,3 +85,6 @@ The file structure of the CSUD is as follows:
 		platform/ source code for the system CSUD runs in.
 			arm/ source code for ARM platforms.
 		usbd/ source code for the generic USB driver.
+
+build for ewokos:
+	make driver CONFIG=FINAL TYPE=LOWLEVEL TARGET=RPI2  GNU=arm-none-eabi-
