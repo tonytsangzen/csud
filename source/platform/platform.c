@@ -515,6 +515,9 @@ void MemoryDeallocateDMA(void *address){
 }
 
 void* ToPhysicalAddress(void *address){
+	if(address < DMABufHeap || address > DMABufHeap  + 4096)
+	      return NULL;
+	
 	return PlatformDMAVir2Phy(address);
 }
 
