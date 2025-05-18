@@ -44,7 +44,7 @@ Result uConsoleGetEvent(u8* event){
 	ret = HidReadDeviceRaw(uconsoleDev, 1, 1, buffer);
 	if(ret == 0){
         printf("%02x %02x %02x %02x\n", buffer[0], buffer[1], buffer[2], buffer[3]);
-        memcpy(event, buffer, 8);
+        MemoryCopy(event, buffer, 8);
     }	
 	return ret;
 }

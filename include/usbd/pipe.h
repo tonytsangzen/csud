@@ -35,11 +35,11 @@ extern "C"
 struct UsbPipeAddress {
 	UsbPacketSize MaxSize : 2; // @0
 	UsbSpeed Speed : 2; // @2
-	unsigned EndPoint : 4; // @4
-	unsigned Device : 8; // @8
+	u32 EndPoint : 4; // @4
+	u32 Device : 8; // @8
 	UsbTransfer Type : 2; // @16
 	UsbDirection Direction : 1; // @18
-	unsigned _reserved19_31 : 13; // @19
+	u32 _reserved19_31 : 13; // @19
 } __attribute__ ((__packed__));
 
 

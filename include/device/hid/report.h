@@ -28,7 +28,7 @@ extern "C"
 	is based upon short. So we can resuse the structure to this effect.
 */
 struct HidReportItem {
-	unsigned Size : 2; // Value is 1 << (size - 1) @0 
+	u32 Size : 2; // Value is 1 << (size - 1) @0 
 	enum HidReportTag {
 		TagMainInput = 0x20,
 		TagMainOutput = 0x24,
@@ -77,7 +77,7 @@ struct HidMainItem {
 	bool Null : 1; // NoNull=0,NullState=1 @6
 	bool Volatile : 1; // NonVolatile=0,Volatile=1 Inputs cannot be volatile @7
 	bool BufferedBytes : 1; // BitField=0,BufferedBytes=1 @8
-	unsigned _reserved9_31 : 23; // @9
+	u32 _reserved9_31 : 23; // @9
 } __attribute__ ((__packed__));
 
 /**
@@ -250,7 +250,7 @@ struct HidUnit {
 	signed Temperature : 4;
 	signed Current : 4;
 	signed LuminousIntensity : 4;
-	unsigned _reserved28_31 : 4;
+	u32 _reserved28_31 : 4;
 } __attribute__ ((__packed__));
 
 /**
