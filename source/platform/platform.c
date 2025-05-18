@@ -310,7 +310,7 @@ void LogPrintF(char* format, u32 formatLength, ...) {
 				base = 16;
 				switch (format[index]) {
 				case 'c':
-					character = va_arg(args, int) & 0x7f;
+					character = va_arg(args, s32) & 0x7f;
 				case '%':
 					messageBuffer[messageIndex++] = character;
 					break;
@@ -462,15 +462,15 @@ void LogPrintF(char* format, u32 formatLength, ...) {
 #define DMA_BLOCK		64
 #define DMA_TOTAL		4096
 static void* DMABufHeap = NULL;
-static int	 DMABufMap[DMA_TOTAL/DMA_BLOCK] = {0};
-static int   DMAUID	= 1;
+static s32	 DMABufMap[DMA_TOTAL/DMA_BLOCK] = {0};
+static s32   DMAUID	= 1;
 
 void* MemoryAllocateDMA(u32 size){
-	int blk_cnt  = ((size + DMA_BLOCK - 1) / DMA_BLOCK); 
-	int blks = 0;
-	int alloc_start;
+	s32 blk_cnt  = ((size + DMA_BLOCK - 1) / DMA_BLOCK); 
+	s32 blks = 0;
+	s32 alloc_start;
 
-	for(int i = 0; i < DMA_TOTAL/DMA_BLOCK; i++){
+	for(s32 i = 0; i < DMA_TOTAL/DMA_BLOCK; i++){
 
 		if(blks == 0)
 			alloc_start = i;
@@ -489,7 +489,7 @@ void* MemoryAllocateDMA(u32 size){
 		return NULL;
 	}
 
-	for(int i = alloc_start; i < alloc_start + blk_cnt ; i++){
+	for(s32 i = alloc_start; i < alloc_start + blk_cnt ; i++){
 		DMABufMap[i] = DMAUID;
 	}
 	LOGF("DMA: alloc memory address:%08x block:%d\n", DMABufHeap + alloc_start * DMA_BLOCK, blk_cnt);
@@ -501,12 +501,12 @@ void MemoryDeallocateDMA(void *address){
 	if(address < DMABufHeap || address > DMABufHeap  + 4096)
 		return;
 
-	int alloc_start = (address - DMABufHeap) / DMA_BLOCK;
+	s32 alloc_start = (address - DMABufHeap) / DMA_BLOCK;
 
 	
-	int uid = DMABufMap[alloc_start];
+	s32 uid = DMABufMap[alloc_start];
 
-	for(int i = alloc_start; i < 4096 - alloc_start ; i++){
+	for(s32 i = alloc_start; i < 4096 - alloc_start ; i++){
 		if(DMABufMap[i] != uid)
 			break;
 		DMABufMap[i] = 0;
@@ -520,6 +520,8 @@ void* ToPhysicalAddress(void *address){
 
  return PlatformDMAVir2Phy(address);
 }
+
+extern void* PlatformAllocateDMA(u32);
 
 void PlatformLoad()
 {

@@ -52,7 +52,7 @@ arguments.
 
 Since the driver can be standalone, the code in /source/platform.c provides an 
 interface to 'system' routines. Thus, it implements many methods which are
-standardised, such as malloc, memcpy, free, print; though these are 
+standardised, such as malloc, MemoryCopy, free, print; though these are 
 deliberately not named as such. This is to avoid conflict with alternative 
 definitions should the need arise. Normally, it is perfectly acceptable to 
 write a wrapper which simply calls these functions when the equivalent is 
@@ -62,7 +62,7 @@ and passes the length as an additional argument.
 The mapping between standard methods and platform.c's version is as follows:
 malloc	<-> MemoryAllocate
 free	<-> MemoryDeallocate
-memcpy	<-> MemoryCopy
+MemoryCopy	<-> MemoryCopy
 print	<-> LogPrint
 
 The file structure of the CSUD is as follows:

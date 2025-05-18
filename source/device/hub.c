@@ -383,7 +383,7 @@ Result HubCheckConnection(struct UsbDevice *device, u8 port) {
 	Result result;
 	struct HubPortFullStatus *portStatus;
 	struct HubDevice *data;
-	int prevConnected;
+	s32 prevConnected;
 
 	data = (struct HubDevice*)device->DriverData;
 	prevConnected = data->PortStatus[port].Status.Connected;

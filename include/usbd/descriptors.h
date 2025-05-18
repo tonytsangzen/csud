@@ -112,10 +112,10 @@ struct UsbConfigurationDescriptor {
 	u8 ConfigurationValue; // +0x5
 	u8 StringIndex; // +0x6
 	struct {
-		unsigned _reserved0_4 : 5; // @0
+		u32 _reserved0_4 : 5; // @0
 		bool RemoteWakeup : 1; // @5
 		bool SelfPowered : 1; // @6
-		unsigned _reserved7 : 1; // @7
+		u32 _reserved7 : 1; // @7
 	} __attribute__ ((__packed__)) Attributes; // +0x7
 	u8 MaximumPower; // +0x8
 } __attribute__ ((__packed__));
@@ -134,7 +134,7 @@ struct UsbOtherSpeedConfigurationDescriptor {
 	u8 ConfigurationValue; // +0x5
 	u8 StringIndex; // +0x6
 	struct {
-		unsigned _reserved0_4 : 5; // @0
+		u32 _reserved0_4 : 5; // @0
 		bool RemoteWakeup : 1; // @5
 		bool SelfPowered : 1; // @6
 		enum {
@@ -193,8 +193,8 @@ struct UsbEndpointDescriptor {
 	u8 DescriptorLength; // +0x0
 	enum DescriptorType DescriptorType : 8; // +0x1
 	struct {
-		unsigned Number : 4; // @0
-		unsigned _reserved4_6 : 3; // @4
+		u32 Number : 4; // @0
+		u32 _reserved4_6 : 3; // @4
 		UsbDirection Direction : 1; // @7
 	} __attribute__ ((__packed__)) EndpointAddress; // +0x2
 	struct {
@@ -210,16 +210,16 @@ struct UsbEndpointDescriptor {
 			Feeback = 1,
 			ImplicitFeebackData = 2,
 		} Usage : 2; // @4
-		unsigned _reserved6_7 : 2; // @6
+		u32 _reserved6_7 : 2; // @6
 	} __attribute__ ((__packed__)) Attributes; // +0x3
 	struct {
-		unsigned MaxSize : 11; // @0
+		u32 MaxSize : 11; // @0
 		enum {
 			None = 0,
 			Extra1 = 1,
 			Extra2 = 2,
 		} Transactions : 2; // @11
-		unsigned _reserved13_15 : 3; // @13
+		u32 _reserved13_15 : 3; // @13
 	} __attribute__ ((__packed__)) Packet; // +0x4
 	u8 Interval; // +0x6
 } __attribute__ ((__packed__));

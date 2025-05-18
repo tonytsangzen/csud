@@ -639,7 +639,7 @@ Result HcdSumbitControlMessage(struct UsbDevice *device,
 	tempPipe.MaxSize = pipe.MaxSize;
 	tempPipe.Type = Control;
 	tempPipe.Direction = Out;
-	memcpy(requestbuffer, request, sizeof(struct UsbDeviceRequest));	
+	MemoryCopy(requestbuffer, request, sizeof(struct UsbDeviceRequest));	
 	if ((result = HcdChannelSendWait(device, &tempPipe, 0, requestbuffer, 8, request, Setup)) != OK) {		
 		LOGF("HCD: Could not send SETUP to %s.\n", UsbGetDescription(device));
 		return OK;
@@ -845,6 +845,8 @@ deallocate:
 	if (Power != NULL) MemoryDeallocate((void *)Power);
 	return result;
 }
+
+extern void* MemoryAllocateDMA(u32);
 
 Result HcdStart() {	
 	Result result;
