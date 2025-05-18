@@ -88,3 +88,5 @@ The file structure of the CSUD is as follows:
 
 build for ewokos:
 	make driver CONFIG=FINAL TYPE=LOWLEVEL TARGET=RPI2  GNU=arm-none-eabi-
+	or:
+	make driver CONFIG=FINAL TYPE=LOWLEVEL TARGET=RPI2  GNU=aarch64-none-elf- ARCH=aarch64
